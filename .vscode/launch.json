@@ -6,12 +6,8 @@
       "request": "launch",
       "type": "node",
       "cwd": "${workspaceFolder}",
-      "runtimeExecutable": "cds",
-      "args": [
-        "serve",
-        "--with-mocks",
-        "--in-memory?"
-      ],
+      "runtimeExecutable": "cds-serve",
+      "args": [],
       "skipFiles": [
         "<node_internals>/**"
       ]

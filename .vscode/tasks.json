@@ -3,8 +3,19 @@
   "tasks": [
     {
       "type": "shell",
-      "label": "cds watch",
-      "command": "cds watch",
+      "label": "cds serve",
+      "command": "cds-serve"
+    },
+    {
+      "type": "shell",
+      "label": "cds deploy (HANA)",
+      "command": "cds-deploy"
+    },
+    {
+      "type": "shell",
+      "label": "cf deploy (BTP)",
+      "command": "cf deploy",
+      "problemMatcher": []
     }
   ]
 }

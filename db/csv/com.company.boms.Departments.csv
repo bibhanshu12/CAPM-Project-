@@ -1,0 +1,3 @@
+departmentId,departmentName,description,manager_employeeId,createdAt,createdBy,modifiedAt,modifiedBy
+d1000000-0000-0000-0000-000000000001,IT Operations,Runs and maintains the internal IT platform and shared services.,,2026-01-05 09:00:00,system,2026-01-05 09:00:00,system
+d1000000-0000-0000-0000-000000000002,Human Resources,"Employee lifecycle, recruitment and policy ownership.",,2026-01-05 09:05:00,system,2026-01-05 09:05:00,system

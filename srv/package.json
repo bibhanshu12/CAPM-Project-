@@ -1,7 +1,7 @@
 {
-  "name": "boms",
+  "name": "boms-srv",
   "version": "1.0.0",
-  "description": "Business Operations Management System (BOMS) - SAP CAP service on SAP HANA Cloud",
+  "description": "BOMS CAP application - serves the OData V4 API from SAP HANA Cloud",
   "type": "module",
   "private": true,
   "engines": {
@@ -12,14 +12,8 @@
     "@sap/cds": "^10",
     "@sap/hana-client": "^2"
   },
-  "devDependencies": {
-    "@sap/cds-dk": "^10.1.0"
-  },
   "scripts": {
-    "start": "cds-serve",
-    "build": "cds build",
-    "deploy": "cds up",
-    "deploy:model": "cds-deploy"
+    "start": "cds-serve"
   },
   "cds": {
     "server": {
@@ -29,9 +23,6 @@
       "db": {
         "kind": "hana"
       }
-    },
-    "features": {
-      "assert_integrity": "db"
     }
   }
 }

@@ -1,0 +1,67 @@
+# Cloud Foundry Multi-Target Application descriptor for BOMS.
+#
+# Topology
+#   boms-db   (hdi)     -> SAP HANA Cloud, HDI container holding the schema
+#   boms-srv  (nodejs)  -> the CAP application, bound to boms-db
+#
+# Both module paths point into `gen/`, which is produced by `cds build`. That
+# step compiles the CDS model twice:
+#   * gen/db    -> .hdiconfig / .hdbtable / .hdbview artifacts + data.sql
+#   * gen/srv   -> csn.json, so the running app is self contained and does not
+#                  need the db/ sources at runtime
+# Never hand-edit anything under gen/, it is overwritten on every build.
+#
+# Deploy:
+#   cds build          # or: npm run build
+#   cf deploy          # or: cds up
+#
+_schema-version: "3.3"
+ID: boms
+version: 1.0.0
+description: Business Operations Management System (BOMS)
+
+parameters:
+  enable-parallel-deployments: true
+
+modules:
+
+  # ---------------------------------------------------------------------------
+  # Database module - SAP HANA Cloud, deployed as an HDI container
+  # ---------------------------------------------------------------------------
+  - name: boms-db
+    type: hdi
+    path: gen/db
+    parameters:
+      # The container is described by the .hdiconfig files in gen/db/src/gen,
+      # which `cds build` derives from db/schema.cds.
+      deploy-mode: hdiconfig
+    properties:
+      # `service` pins this module to a service instance that already exists.
+      # Without it the MTA builder would ask the broker to create a new one
+      # on every deploy, leaving two HANA databases drifting apart.
+      service: capm-db
+      # Change the container name to keep several environments side by side.
+      HDI_CONTAINER: boms
+
+  # ---------------------------------------------------------------------------
+  # Application module - CAP on Node.js
+  # ---------------------------------------------------------------------------
+  - name: boms-srv
+    type: nodejs
+    path: gen/srv
+    parameters:
+      memory: 1024M
+      disk-quota: 1024M
+    requires:
+      # Binds the hana service to the app. At runtime CAP picks the
+      # credentials up automatically from VCAP_SERVICES, so no secret is
+      # ever stored in this project.
+      - name: boms-db
+    properties:
+      PORT: 4004
+      NODE_ENV: production
+    build-parameters:
+      # Installs the dependencies declared in gen/srv/package.json.
+      builder: npm-ci
+      ignore:
+        - .gitignore

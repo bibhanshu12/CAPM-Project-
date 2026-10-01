@@ -1,0 +1,3 @@
+employeeId,employeeName,email,designation,employmentStatus,department_departmentId,manager_employeeId,createdAt,createdBy,modifiedAt,modifiedBy
+e1000000-0000-0000-0000-000000000001,Aarav Sharma,aarav.sharma@example.com,Head of IT,Active,d1000000-0000-0000-0000-000000000001,,2026-01-05 09:10:00,system,2026-01-05 09:10:00,system
+e1000000-0000-0000-0000-000000000002,Priya Menon,priya.menon@example.com,HR Business Partner,Active,d1000000-0000-0000-0000-000000000002,,2026-01-05 09:15:00,system,2026-01-05 09:15:00,system

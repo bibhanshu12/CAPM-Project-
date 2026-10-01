@@ -1,0 +1,27 @@
+{
+  "_version": "3.41",
+  "description": "Business Operations Management System (BOMS) - CAP service",
+  "name": "boms-srv",
+  "version": "1.0.0",
+  "instances": [
+    {
+      "name": "boms-srv",
+      "memory": 1024,
+      "disk-quota": 1024
+    }
+  ],
+  "buildpacks": [
+    {
+      "name": "nodejs_buildpack"
+    }
+  ],
+  "routes": [
+    {
+      "name": "boms-srv"
+    }
+  ],
+  "env": {
+    "PORT": 4004,
+    "NODE_ENV": "production"
+  }
+}

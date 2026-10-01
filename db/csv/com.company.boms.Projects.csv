@@ -1,0 +1,3 @@
+projectId,projectName,description,projectStatus,startDate,endDate,createdAt,createdBy,modifiedAt,modifiedBy
+f1000000-0000-0000-0000-000000000001,Network Refresh,Replace ageing switches and Wi-Fi access points across all offices.,Active,2026-01-10,2026-06-30,2026-01-06 10:00:00,system,2026-01-06 10:00:00,system
+f1000000-0000-0000-0000-000000000002,Self Service Portal,Deliver a portal where employees raise and track their own requests.,Planned,2026-02-01,2026-09-30,2026-01-06 10:05:00,system,2026-01-06 10:05:00,system

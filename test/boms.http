@@ -1,0 +1,297 @@
+### BOMS - OData V4 CRUD test collection
+###
+### Every URL and payload below was verified against a running instance.
+###
+### Works with the VS Code "REST Client" extension (humao.rest-client, already
+### recommended in .vscode/extensions.json) and imports into Postman as well.
+###
+### Start the app first:   npm start        -> http://localhost:4004
+### After deploying to BTP, point @host at your route:
+###   https://<route>.cfapps.<region>.hana.ondemand.com
+###
+### URL contract notes (learned the hard way, so you do not have to):
+###   * The service is mounted at /boms, so the base path is /boms, NOT
+###     /odata/v4/boms.
+###   * Associations are addressed by a nested object or by the foreign key
+###     column, never by a bare key string:
+###       WRONG   { "requestedBy": "e1000000-..." }
+###       RIGHT   { "requestedBy": { "employeeId": "e1000000-..." } }
+###       ALSO OK { "requestedBy_employeeId": "e1000000-..." }
+###   * EmployeeProjects has a composite key of the two foreign key columns.
+###   * Navigation follows the association as declared, so
+###     /ServiceRequests(<id>)/requestedBy works, while
+###     /Employees(<id>)/requestedBy does not exist.
+
+@host = http://localhost:4004
+@base = {{host}}/boms
+@json = application/json
+
+
+### ===========================================================================
+### 1. SERVICE DOCUMENT / METADATA
+### ===========================================================================
+
+### Service document. Lists the 10 BOMS entity sets.
+GET {{base}}/
+
+### OData V4 metadata document: keys, associations, enum code lists.
+GET {{base}}/$metadata
+
+
+### ===========================================================================
+### 2. READ - all 10 entities (2 sample records each)
+### ===========================================================================
+
+GET {{base}}/Departments
+###
+GET {{base}}/Employees
+###
+GET {{base}}/Projects
+###
+GET {{base}}/EmployeeProjects
+###
+GET {{base}}/ServiceRequests
+###
+GET {{base}}/RequestApprovals
+###
+GET {{base}}/RequestComments
+###
+GET {{base}}/RequestHistories
+###
+GET {{base}}/KnowledgeCategories
+###
+GET {{base}}/KnowledgeArticles
+
+
+### ===========================================================================
+### 3. READ - filter, order, select, expand, navigate
+### ===========================================================================
+
+### Critical and high priority requests, most severe first
+GET {{base}}/ServiceRequests?$filter=priority le 2&$orderby=priority asc&$select=title,priority,status
+
+### Requests in a given status
+GET {{base}}/ServiceRequests?$filter=status eq 'InProgress'
+
+### Only published articles
+GET {{base}}/KnowledgeArticles?$filter=status eq 'Published'
+
+### One employee, expanded along both associations
+GET {{base}}/Employees(e1000000-0000-0000-0000-000000000001)?$expand=department,manager
+
+### One request, expanded to requester, assignee and department at once
+GET {{base}}/ServiceRequests(r1000000-0000-0000-0000-000000000001)?$expand=requestedBy,assignedTo,department
+
+### Navigate along an association: request -> the employee that raised it
+GET {{base}}/ServiceRequests(r1000000-0000-0000-0000-000000000001)/requestedBy
+
+### Approvals of one request. The association is declared on RequestApprovals,
+### so the parent has no inverse navigation property - filter on the child
+### instead of navigating upwards. Note the quoted GUID: OData needs string
+### literals quoted, also for Edm.Guid values.
+GET {{base}}/RequestApprovals?$filter=request/requestId eq 'r1000000-0000-0000-0000-000000000001'
+
+### The same request traversed from the other side
+GET {{base}}/RequestComments?$filter=request/requestId eq 'r1000000-0000-0000-0000-000000000001'&$expand=request,commentedBy
+
+### One project allocation, addressed by its composite key
+GET {{base}}/EmployeeProjects(employee_employeeId=e1000000-0000-0000-0000-000000000001,project_projectId=p1000000-0000-0000-0000-000000000001)
+
+### Count only
+GET {{base}}/ServiceRequests/$count
+
+### First 2, sorted
+GET {{base}}/ServiceRequests?$top=2&$orderby=priority asc
+
+### Text search on article content, the field a RAG pipeline indexes
+GET {{base}}/KnowledgeArticles?$filter=contains(content,'certificate')&$select=title,status
+
+
+### ===========================================================================
+### 4. CREATE - POST
+### ===========================================================================
+
+### Keys are UUIDs that CAP fills in automatically, and the managed fields
+### (createdAt, createdBy, modifiedAt, modifiedBy) are set by the server.
+# @name createDepartment
+POST {{base}}/Departments
+Content-Type: {{json}}
+
+{
+  "departmentName": "Finance",
+  "description": "Budgeting, invoicing and financial reporting."
+}
+
+### Create a knowledge category
+POST {{base}}/KnowledgeCategories
+Content-Type: {{json}}
+
+{
+  "categoryName": "Security & Compliance",
+  "description": "Data protection, audit and policy topics."
+}
+
+### Create a service request. Associations go in as nested objects.
+POST {{base}}/ServiceRequests
+Content-Type: {{json}}
+
+{
+  "title": "Laptop will not boot after update",
+  "description": "Device stays on the company logo screen after the nightly patch.",
+  "requestType": "Incident",
+  "priority": 2,
+  "requestedBy": { "employeeId": "e1000000-0000-0000-0000-000000000002" },
+  "assignedTo": { "employeeId": "e1000000-0000-0000-0000-000000000001" },
+  "department": { "departmentId": "d1000000-0000-0000-0000-000000000001" },
+  "dueDate": "2026-03-01T17:00:00Z"
+}
+
+### Create a knowledge article. `content` is what a RAG pipeline chunks and
+### embeds, so this is the most interesting one to POST.
+POST {{base}}/KnowledgeArticles
+Content-Type: {{json}}
+
+{
+  "title": "How to request a new laptop",
+  "content": "Submit a request through the self service portal. The IT Operations team assesses it within two working days and assigns a loan device in the meantime.",
+  "category": { "categoryId": "k1000000-0000-0000-0000-000000000001" },
+  "author": { "employeeId": "e1000000-0000-0000-0000-000000000001" },
+  "status": "Draft"
+}
+
+### Create an approval on the second sample request
+POST {{base}}/RequestApprovals
+Content-Type: {{json}}
+
+{
+  "request": { "requestId": "r1000000-0000-0000-0000-000000000002" },
+  "approver": { "employeeId": "e1000000-0000-0000-0000-000000000001" },
+  "approvalStatus": "Pending",
+  "comments": "Checking with the data protection officer."
+}
+
+### Add a comment to a request
+POST {{base}}/RequestComments
+Content-Type: {{json}}
+
+{
+  "request": { "requestId": "r1000000-0000-0000-0000-000000000001" },
+  "commentedBy": { "employeeId": "e1000000-0000-0000-0000-000000000001" },
+  "commentText": "Certificate reissued, users asked to reconnect."
+}
+
+### Employee-project allocation, composite key of both foreign keys
+POST {{base}}/EmployeeProjects
+Content-Type: {{json}}
+
+{
+  "employee": { "employeeId": "e1000000-0000-0000-0000-000000000001" },
+  "project": { "projectId": "p1000000-0000-0000-0000-000000000002" },
+  "projectRole": "Technical Lead"
+}
+
+
+### ===========================================================================
+### 5. UPDATE - PATCH
+### ===========================================================================
+
+### Change status and assign an engineer. modifiedAt/modifiedBy are set by the
+### server, you never send them.
+PATCH {{base}}/ServiceRequests(r1000000-0000-0000-0000-000000000002)
+Content-Type: {{json}}
+
+{
+  "status": "Assigned",
+  "assignedTo": { "employeeId": "e1000000-0000-0000-0000-000000000001" }
+}
+
+### The same update through the foreign key column
+PATCH {{base}}/ServiceRequests(r1000000-0000-0000-0000-000000000002)
+Content-Type: {{json}}
+
+{
+  "assignedTo_employeeId": "e1000000-0000-0000-0000-000000000001"
+}
+
+### Approve a pending request
+PATCH {{base}}/RequestApprovals(a1000000-0000-0000-0000-000000000002)
+Content-Type: {{json}}
+
+{
+  "approvalStatus": "Approved",
+  "approvedAt": "2026-02-04T09:00:00Z",
+  "comments": "Approved, least privilege access granted."
+}
+
+### Publish a draft article
+PATCH {{base}}/KnowledgeArticles(n1000000-0000-0000-0000-000000000002)
+Content-Type: {{json}}
+
+{
+  "status": "Published",
+  "publishedAt": "2026-02-05T09:00:00Z"
+}
+
+### Append to the audit trail
+POST {{base}}/RequestHistories
+Content-Type: {{json}}
+
+{
+  "request": { "requestId": "r1000000-0000-0000-0000-000000000002" },
+  "action": "StatusChange",
+  "oldStatus": "New",
+  "newStatus": "Assigned",
+  "performedBy": { "employeeId": "e1000000-0000-0000-0000-000000000001" },
+  "comments": "Assigned to the IT Operations queue."
+}
+
+
+### ===========================================================================
+### 6. DELETE
+### ===========================================================================
+
+### Expect 204 No Content.
+DELETE {{base}}/RequestHistories(h1000000-0000-0000-0000-000000000002)
+
+### Expect 404, it is gone.
+GET {{base}}/RequestHistories(h1000000-0000-0000-0000-000000000002)
+
+### Clean up the department created in section 4
+DELETE {{base}}/Departments({{createDepartment.response.body.departmentId}})
+
+
+### ===========================================================================
+### 7. NEGATIVE TESTS - error handling
+### ===========================================================================
+
+### Unknown entity set - expect 404
+GET {{base}}/DoesNotExist
+
+### Key that does not exist - expect 404
+GET {{base}}/ServiceRequests(00000000-0000-0000-0000-000000000000)
+
+### Missing a mandatory field (departmentName is not null) - expect 400
+POST {{base}}/Departments
+Content-Type: {{json}}
+
+{
+  "description": "Missing the mandatory name."
+}
+
+### Value outside the enum vocabulary (priority only allows 1..4) - expect 400
+POST {{base}}/ServiceRequests
+Content-Type: {{json}}
+
+{
+  "title": "Invalid priority",
+  "priority": 99
+}
+
+### Association given a bare key string instead of an object - expect 400
+POST {{base}}/ServiceRequests
+Content-Type: {{json}}
+
+{
+  "title": "Wrong association shape",
+  "requestedBy": "e1000000-0000-0000-0000-000000000001"
+}

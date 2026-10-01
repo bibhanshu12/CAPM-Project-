@@ -1,0 +1,8 @@
+# Keep the Cloud Foundry app upload small: the Node.js buildpack installs
+# production dependencies from srv/package.json on the target platform.
+node_modules/
+npm-debug.log*
+*.log
+.env
+.cdsrc-private.json
+.DS_Store

@@ -1,0 +1,3 @@
+historyId,request_requestId,action,oldStatus,newStatus,performedBy_employeeId,comments,createdAt
+b2000000-0000-0000-0000-000000000001,b1000000-0000-0000-0000-000000000001,StatusChange,Assigned,InProgress,e1000000-0000-0000-0000-000000000001,Root cause identified as an expired root certificate.,2026-02-01 09:00:00
+b2000000-0000-0000-0000-000000000002,b1000000-0000-0000-0000-000000000002,Created,,New,e1000000-0000-0000-0000-000000000002,Request raised by the new joiner via the mailbox.,2026-02-03 11:20:00
