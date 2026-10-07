@@ -1,0 +1,3 @@
+ID,supplierCode,name,email,phone,address,isActive
+55555555-5555-4555-8555-555555555001,SUPP-BIKE-001,CycleParts India Pvt Ltd,sales@cycleparts.in,+91-9876500001,Pune Maharashtra,true
+55555555-5555-4555-8555-555555555002,SUPP-CHAIR-001,SeatWell Furniture Supply,orders@seatwell.in,+91-9876500002,Bengaluru Karnataka,true
