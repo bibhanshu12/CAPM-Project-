@@ -126,6 +126,20 @@ const mkErr = (code, message, row, field, value) => ({
   message,
 })
 
+/**
+ * Writes the prepared rows on the ambient request transaction.
+ *
+ * Never wrap this in cds.tx(): @cap-js/sqlite runs with pool.max = 1 (each
+ * connection opens its own :memory: database), and the incoming HTTP request
+ * already holds that single connection. A nested root transaction would wait
+ * for a second connection forever, which hangs this request and starves every
+ * other request waiting on the same pool. The ambient transaction commits
+ * automatically when the request finishes, and CAP renders this INSERT as a
+ * single `... SELECT ... FROM json_each(?)` statement, so it stays atomic.
+ */
+const runInsert = (fqn, entries) =>
+  entries.length === 0 ? Promise.resolve() : cds.run(INSERT.into(fqn).entries(entries))
+
 export async function runImport({ model, entityRaw, file, fileName }) {
   const requested = String(entityRaw ?? '').trim()
   const result = emptyResult(requested, fileName)
@@ -488,9 +502,7 @@ export async function runImport({ model, entityRaw, file, fileName }) {
   })
 
   try {
-    await cds.tx(async tx => {
-      await tx.run(INSERT.into(fqn).entries(entries))
-    })
+    await runInsert(fqn, entries)
   } catch (e) {
     const msg = String(e.message ?? e).slice(0, 300)
     result.message = `Insert failed: ${msg}`
