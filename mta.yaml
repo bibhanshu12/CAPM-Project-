@@ -2,29 +2,35 @@ _schema-version: 3.3.0
 ID: CAPM
 version: 1.0.0
 description: "A simple CAP project."
+
 parameters:
-  enable-parallel-deployments: true
+  enable-parallel-deployments: false
+
 build-parameters:
   before-all:
     - builder: custom
       commands:
         - npm ci
         - npx cds build --production
+
 modules:
   - name: CAPM-srv
     type: nodejs
     path: gen/srv
     parameters:
       instances: 1
+      memory: 256M
+      disk-quota: 512M
       buildpack: nodejs_buildpack
     build-parameters:
       builder: npm-ci
     provides:
-      - name: srv-api # required by consumers of CAP services (e.g. approuter)
+      - name: srv-api
         properties:
           srv-url: ${default-url}
     requires:
       - name: CAPM-db
+      - name: CAPM-auth
 
   - name: CAPM-db-deployer
     type: hdb
@@ -36,7 +42,20 @@ modules:
 
 resources:
   - name: CAPM-db
-    type: com.sap.xs.hdi-container
+    type: org.cloudfoundry.existing-service
     parameters:
-      service: hana
-      service-plan: hdi-shared
+      service-name: hanahdi
+
+  - name: CAPM-auth
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: xsuaa
+      service-plan: application
+      path: ./xs-security.json
+      config:
+        xsappname: CAPM-dev
+        tenant-mode: dedicated
+        oauth2-configuration:
+          credential-types:
+            - "binding-secret"
+            - "x509"

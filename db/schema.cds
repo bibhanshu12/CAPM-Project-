@@ -20,7 +20,7 @@ entity Products : cuid, managed {
     baseUnit    : String(10) not null;
     isActive    : Boolean default true;
 }
-
+ 
 // Bill of Materials header
 entity BOMs : cuid, managed {
     bomNumber   : String(40) not null @unique;
