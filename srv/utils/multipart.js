@@ -51,7 +51,7 @@ export function parseMultipart(buffer, contentType) {
     let end = nextDelim
     if (buffer[end - 2] === 0x0d && buffer[end - 1] === 0x0a) end -= 2
     else if (buffer[end - 1] === 0x0a) end -= 1
-    const data = buffer.subarray(headEnd + headLen, end < headEnd + headLen ? headEnd + headLen : end)
+    const data = buffer.subarray(headEnd + headLen, end < head  End + headLen ? headEnd + headLen : end)
 
     if (filename != null || name === 'file') {
       if (!file) file = { fileName: filename ?? '', contentType: partType, data: Buffer.from(data) }
